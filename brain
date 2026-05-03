@@ -1,0 +1,152 @@
+#!/bin/bash
+# brain — Terminal-first capture for Obsidian Second Brain
+# Usage: brain capture "note text"
+#        brain process
+#        brain ask "question"
+#        brain protocol
+#        brain sync
+#        brain daily
+
+set -e
+
+VAULT="${BRAIN_VAULT:-$HOME/brain}"
+INBOX="$VAULT/00-Inbox"
+DAILY="$VAULT/06-Daily"
+WIKI="$VAULT/05-Wiki"
+PROTOCOL="$WIKI/The-Anson-Protocol.md"
+AGENTS="$VAULT/AGENTS.md"
+LOGS="$VAULT/07-Agent-Logs"
+
+# Ensure vault exists
+if [ ! -d "$VAULT" ]; then
+  echo "Error: Vault not found at $VAULT"
+  echo "Set BRAIN_VAULT or run ./install.sh"
+  exit 1
+fi
+
+# Get current date strings
+DATE_STAMP=$(date +%Y-%m-%d)
+TIME_STAMP=$(date +%H%M%S)
+ISO_DATE=$(date -Iseconds)
+
+case "${1:-capture}" in
+  capture|c)
+    NOTE="${2:-$(cat)}"
+    if [ -z "$NOTE" ]; then
+      echo "Usage: brain capture \"your note here\""
+      echo "       echo \"note\" | brain capture"
+      exit 1
+    fi
+    FILENAME="$INBOX/${DATE_STAMP}-${TIME_STAMP}.md"
+    cat > "$FILENAME" <<EOF
+---
+date: $ISO_DATE
+source: terminal
+tags: [inbox, unprocessed]
+---
+$NOTE
+EOF
+    echo "✓ Captured → $FILENAME"
+    ;;
+
+  process|p)
+    echo "🧠 Processing inbox with OpenCode..."
+    cd "$VAULT"
+    if [ -z "$(ls -A $INBOX/*.md 2>/dev/null)" ]; then
+      echo "Inbox is empty. Nothing to process."
+      exit 0
+    fi
+    opencode run "Process all notes in 00-Inbox/ using the instructions in AGENTS.md. Log everything to 07-Agent-Logs/${DATE_STAMP}.md"
+    echo "✓ Processing complete. Check 07-Agent-Logs/${DATE_STAMP}.md"
+    ;;
+
+  ask|a)
+    QUESTION="${2:-}"
+    if [ -z "$QUESTION" ]; then
+      echo "Usage: brain ask \"your question\""
+      exit 1
+    fi
+    echo "🔍 Asking your second brain..."
+    cd "$VAULT"
+    opencode run "Search 05-Wiki/ and 06-Daily/ to answer: $QUESTION. Cite specific notes."
+    ;;
+
+  protocol|pro)
+    if [ -f "$PROTOCOL" ]; then
+      cat "$PROTOCOL"
+    else
+      echo "Protocol not found. Run 'brain process' first."
+      exit 1
+    fi
+    ;;
+
+  sync|s)
+    cd "$VAULT"
+    if [ -d .git ]; then
+      git add .
+      git commit -m "vault sync: ${DATE_STAMP} ${TIME_STAMP}" || echo "Nothing to commit"
+      git push origin main 2>/dev/null || echo "Push skipped (no remote or offline)"
+      echo "✓ Synced"
+    else
+      echo "Not a git repo. Run 'git init' in your vault first."
+      exit 1
+    fi
+    ;;
+
+  daily|d)
+    DAILY_NOTE="$DAILY/${DATE_STAMP}.md"
+    if [ ! -f "$DAILY_NOTE" ]; then
+      cat > "$DAILY_NOTE" <<EOF
+---
+date: $ISO_DATE
+tags: [daily]
+---
+# ${DATE_STAMP}
+
+## Morning
+- 
+
+## Notes
+- 
+
+## Evening Review
+- 
+EOF
+      echo "✓ Created daily note → $DAILY_NOTE"
+    fi
+    if command -v obsidian &> /dev/null; then
+      obsidian "obsidian://open?vault=brain&file=06-Daily/${DATE_STAMP}"
+    else
+      echo "Daily note ready: $DAILY_NOTE"
+    fi
+    ;;
+
+  help|h|--help|-h)
+    cat <<EOF
+brain — Terminal-first Second Brain
+
+Commands:
+  capture, c [text]    Capture a note to inbox
+  process, p           Process inbox with OpenCode
+  ask, a [question]    Query your knowledge base
+  protocol, pro        Display The Anson Protocol
+  sync, s              Git commit and push
+  daily, d             Open/create today's note
+  help, h              Show this help
+
+Environment:
+  BRAIN_VAULT          Path to vault (default: ~/brain)
+
+Examples:
+  brain capture "Meeting notes from counselor"
+  brain process
+  brain ask "What do I know about CUSAT?"
+EOF
+    ;;
+
+  *)
+    echo "Unknown command: $1"
+    echo "Run 'brain help' for usage."
+    exit 1
+    ;;
+esac

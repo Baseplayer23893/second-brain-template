@@ -1,0 +1,17 @@
+{
+  "alwaysUpdateLinks": true,
+  "newFileLocation": "folder",
+  "newFileFolderPath": "00-Inbox",
+  "attachmentFolderPath": "03-Resources/attachments",
+  "promptDelete": false,
+  "showInlineTitle": true,
+  "showRibbon": true,
+  "readableLineLength": true,
+  "foldHeading": true,
+  "foldIndent": true,
+  "defaultViewMode": "source",
+  "livePreview": true,
+  "showLineNumber": false,
+  "tabSize": 2,
+  "useTab": false
+}

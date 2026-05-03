@@ -1,0 +1,24 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# Obsidian workspace (personal, don't share)
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+
+# Keep plugin configs but not workspace state
+.obsidian/plugins/*/data.json
+
+# Personal vault data — users add their own
+06-Daily/
+07-Agent-Logs/
+04-Archive/
+
+# Telegram bot token (never commit secrets)
+.env
+*.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
