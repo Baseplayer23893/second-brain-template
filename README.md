@@ -25,7 +25,7 @@ This template gives you:
 ## 30-Second Setup
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/second-brain-template.git
+git clone https://github.com/Baseplayer23893/second-brain-template.git
 cd second-brain-template
 ./install.sh
 ```
